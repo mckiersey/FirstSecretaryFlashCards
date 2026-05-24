@@ -1,0 +1,251 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f7f9;
+  --text: #1d2430;
+  --muted: #667085;
+  --line: #d9dee7;
+  --panel: #ffffff;
+  --accent: #255f85;
+  --good: #217346;
+  --bad: #a33a3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+.app {
+  width: min(920px, calc(100vw - 32px));
+  margin: 24px auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.topbar p,
+.hint,
+.empty p,
+.stats span {
+  color: var(--muted);
+}
+
+.importer,
+.stats,
+.controls,
+.card-panel,
+.empty {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.importer {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.importer label,
+.editor label {
+  font-weight: 700;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 12px;
+}
+
+.stats div {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border-right: 1px solid var(--line);
+}
+
+.stats div:last-child {
+  border-right: 0;
+}
+
+.stats strong {
+  font-size: 24px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.filter.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.study {
+  min-height: 360px;
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 300px;
+  text-align: center;
+  padding: 24px;
+}
+
+.card-panel {
+  padding: 16px;
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.flash-card {
+  width: 100%;
+  min-height: 250px;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 28px;
+  white-space: pre-wrap;
+}
+
+#faceLabel {
+  color: var(--muted);
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+#cardText {
+  font-size: 24px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.editor {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.success {
+  background: var(--good);
+  border-color: var(--good);
+  color: white;
+}
+
+.danger {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: white;
+}
+
+.ghost {
+  background: transparent;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .app {
+    width: min(100vw - 20px, 920px);
+    margin: 10px auto;
+  }
+
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .stats div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .controls,
+  .actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .controls {
+    display: grid;
+  }
+}

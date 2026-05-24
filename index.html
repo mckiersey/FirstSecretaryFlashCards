@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flash Cards</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./vendor/xlsx.full.min.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <h1>Flash Cards</h1>
+          <p>Import question and answer pairs, study, edit, and track results.</p>
+        </div>
+        <button id="clearDeck" class="ghost" type="button">Clear</button>
+      </header>
+
+      <section class="importer">
+        <label for="fileInput">Excel or CSV file</label>
+        <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
+        <p class="hint">Expected columns: Question and Answer. The first two columns are used if names are missing.</p>
+      </section>
+
+      <section class="stats" aria-label="Study stats">
+        <div>
+          <strong id="totalCards">0</strong>
+          <span>Cards</span>
+        </div>
+        <div>
+          <strong id="rightCount">0</strong>
+          <span>Right</span>
+        </div>
+        <div>
+          <strong id="wrongCount">0</strong>
+          <span>Wrong</span>
+        </div>
+        <div>
+          <strong id="accuracy">0%</strong>
+          <span>Accuracy</span>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Card filters">
+        <button class="filter active" type="button" data-filter="all">All</button>
+        <button class="filter" type="button" data-filter="missed">Missed</button>
+        <button class="filter" type="button" data-filter="unseen">Unseen</button>
+      </section>
+
+      <section class="study">
+        <div id="emptyState" class="empty">
+          <h2>No cards yet</h2>
+          <p>Upload an Excel or CSV file to start.</p>
+        </div>
+
+        <article id="cardPanel" class="card-panel hidden">
+          <div class="card-meta">
+            <span id="positionLabel">Card 1 of 1</span>
+            <span id="cardStats">0 right / 0 wrong</span>
+          </div>
+
+          <button id="flashCard" class="flash-card" type="button" aria-label="Flip card">
+            <span id="faceLabel">Question</span>
+            <span id="cardText"></span>
+          </button>
+
+          <div id="answerEditor" class="editor hidden">
+            <label for="answerInput">Edit answer</label>
+            <textarea id="answerInput" rows="5"></textarea>
+            <button id="saveAnswer" type="button">Save answer</button>
+          </div>
+
+          <div class="actions">
+            <button id="prevCard" type="button">Previous</button>
+            <button id="wrongCard" class="danger" type="button">Wrong</button>
+            <button id="rightCard" class="success" type="button">Right</button>
+            <button id="nextCard" type="button">Next</button>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
