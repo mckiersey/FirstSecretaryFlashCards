@@ -1,15 +1,23 @@
 const storageKey = "flash-card-app-v1";
+const cloudConfigKey = "flash-card-supabase-config-v1";
+const tableName = "flashcards";
 
 const state = {
   cards: [],
   currentIndex: 0,
   showAnswer: false,
   filter: "all",
+  cloud: null,
 };
 
 const els = {
   fileInput: document.querySelector("#fileInput"),
   clearDeck: document.querySelector("#clearDeck"),
+  supabaseUrl: document.querySelector("#supabaseUrl"),
+  supabaseKey: document.querySelector("#supabaseKey"),
+  saveCloud: document.querySelector("#saveCloud"),
+  loadCloud: document.querySelector("#loadCloud"),
+  cloudStatus: document.querySelector("#cloudStatus"),
   totalCards: document.querySelector("#totalCards"),
   rightCount: document.querySelector("#rightCount"),
   wrongCount: document.querySelector("#wrongCount"),
@@ -56,6 +64,118 @@ function save() {
       currentIndex: state.currentIndex,
     }),
   );
+}
+
+function setCloudStatus(message) {
+  els.cloudStatus.textContent = message;
+}
+
+function loadCloudConfig() {
+  const saved = localStorage.getItem(cloudConfigKey);
+  if (!saved) return null;
+
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return null;
+  }
+}
+
+function saveCloudConfig(config) {
+  localStorage.setItem(cloudConfigKey, JSON.stringify(config));
+}
+
+function connectCloud(config) {
+  if (!config?.url || !config?.key || !window.supabase?.createClient) {
+    state.cloud = null;
+    setCloudStatus("Not connected");
+    return false;
+  }
+
+  state.cloud = window.supabase.createClient(config.url, config.key);
+  els.supabaseUrl.value = config.url;
+  els.supabaseKey.value = config.key;
+  setCloudStatus("Connected");
+  return true;
+}
+
+function rowToCard(row) {
+  return {
+    id: row.id,
+    question: row.question,
+    answer: row.answer,
+    right: row.right_count || 0,
+    wrong: row.wrong_count || 0,
+    lastReviewed: row.last_reviewed,
+    createdAt: row.created_at,
+  };
+}
+
+function cardToRow(card) {
+  return {
+    id: card.id,
+    question: card.question,
+    answer: card.answer,
+    right_count: card.right,
+    wrong_count: card.wrong,
+    last_reviewed: card.lastReviewed,
+    created_at: card.createdAt,
+  };
+}
+
+async function loadFromCloud() {
+  if (!state.cloud) {
+    setCloudStatus("Save a Supabase connection first");
+    return;
+  }
+
+  setCloudStatus("Loading cloud cards...");
+  const { data, error } = await state.cloud.from(tableName).select("*").order("created_at", { ascending: true });
+
+  if (error) {
+    setCloudStatus(`Cloud load failed: ${error.message}`);
+    return;
+  }
+
+  state.cards = data.map(rowToCard);
+  state.currentIndex = 0;
+  state.showAnswer = false;
+  state.filter = "all";
+  setCloudStatus(`Loaded ${state.cards.length} cloud cards`);
+  render();
+}
+
+async function replaceCloudDeck() {
+  if (!state.cloud) return;
+
+  setCloudStatus("Saving cloud deck...");
+  const { error: deleteError } = await state.cloud.from(tableName).delete().not("id", "is", null);
+
+  if (deleteError) {
+    setCloudStatus(`Cloud save failed: ${deleteError.message}`);
+    return;
+  }
+
+  if (!state.cards.length) {
+    setCloudStatus("Cloud deck cleared");
+    return;
+  }
+
+  const { error: insertError } = await state.cloud.from(tableName).insert(state.cards.map(cardToRow));
+
+  if (insertError) {
+    setCloudStatus(`Cloud save failed: ${insertError.message}`);
+    return;
+  }
+
+  setCloudStatus(`Saved ${state.cards.length} cards to cloud`);
+}
+
+async function saveCardToCloud(card) {
+  if (!state.cloud || !card) return;
+
+  const { error } = await state.cloud.from(tableName).upsert(cardToRow(card));
+  setCloudStatus(error ? `Cloud update failed: ${error.message}` : "Cloud saved");
 }
 
 function filteredCards() {
@@ -164,6 +284,7 @@ async function importFile(file) {
   state.showAnswer = false;
   state.filter = "all";
   render();
+  await replaceCloudDeck();
 }
 
 function move(delta) {
@@ -178,6 +299,7 @@ function recordResult(kind) {
 
   card[kind] += 1;
   card.lastReviewed = new Date().toISOString();
+  saveCardToCloud(card);
   move(1);
 }
 
@@ -187,13 +309,26 @@ els.fileInput.addEventListener("change", (event) => {
 });
 
 els.clearDeck.addEventListener("click", () => {
-  if (!state.cards.length || confirm("Clear all cards and progress from this browser?")) {
+  if (!state.cards.length || confirm("Clear all cards and progress from this browser and connected cloud database?")) {
     state.cards = [];
     state.currentIndex = 0;
     state.showAnswer = false;
     render();
+    replaceCloudDeck();
   }
 });
+
+els.saveCloud.addEventListener("click", async () => {
+  const config = {
+    url: els.supabaseUrl.value.trim(),
+    key: els.supabaseKey.value.trim(),
+  };
+
+  saveCloudConfig(config);
+  if (connectCloud(config)) await loadFromCloud();
+});
+
+els.loadCloud.addEventListener("click", loadFromCloud);
 
 els.filterButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -214,6 +349,7 @@ els.saveAnswer.addEventListener("click", () => {
   if (!card) return;
 
   card.answer = els.answerInput.value.trim();
+  saveCardToCloud(card);
   render();
 });
 
@@ -223,4 +359,5 @@ els.rightCard.addEventListener("click", () => recordResult("right"));
 els.wrongCard.addEventListener("click", () => recordResult("wrong"));
 
 load();
+connectCloud(loadCloudConfig());
 render();

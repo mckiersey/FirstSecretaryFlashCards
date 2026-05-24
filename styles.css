@@ -73,6 +73,7 @@ h1 {
 }
 
 .importer,
+.cloud,
 .stats,
 .controls,
 .card-panel,
@@ -90,8 +91,52 @@ h1 {
 }
 
 .importer label,
+.cloud label,
 .editor label {
   font-weight: 700;
+}
+
+.cloud {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.cloud-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.cloud h2 {
+  font-size: 18px;
+}
+
+.cloud p {
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.cloud-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.cloud label {
+  display: grid;
+  gap: 6px;
+}
+
+.cloud input {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  width: 100%;
 }
 
 .stats {
@@ -241,11 +286,21 @@ textarea {
   }
 
   .controls,
-  .actions {
+  .actions,
+  .cloud-grid {
     grid-template-columns: 1fr 1fr;
   }
 
   .controls {
     display: grid;
+  }
+
+  .cloud-head {
+    flex-direction: column;
+  }
+
+  .cloud-grid label,
+  .cloud-grid button {
+    grid-column: 1 / -1;
   }
 }

@@ -20,7 +20,8 @@ If those column names are not present, the app uses the first two columns.
 - Mark cards right or wrong
 - Track total cards, right answers, wrong answers, and accuracy
 - Filter all, missed, or unseen cards
-- Save everything in browser local storage
+- Save in browser local storage
+- Optional Supabase cloud database for syncing across browsers/devices
 
 ## Run locally
 
@@ -35,13 +36,13 @@ Open `index.html` in a browser.
 
 No build command is required.
 
-## Database later
+## Supabase database
 
-The current version stores data in each browser's local storage. For shared storage across browsers or devices, add Supabase and store these fields:
+Create a Supabase project, open the SQL editor, and run:
 
 ```sql
-create table flashcards (
-  id uuid primary key default gen_random_uuid(),
+create table if not exists public.flashcards (
+  id uuid primary key,
   question text not null,
   answer text not null,
   right_count integer not null default 0,
@@ -49,4 +50,34 @@ create table flashcards (
   last_reviewed timestamptz,
   created_at timestamptz not null default now()
 );
+
+alter table public.flashcards enable row level security;
+
+create policy "Allow public flashcard reads"
+on public.flashcards for select
+to anon
+using (true);
+
+create policy "Allow public flashcard inserts"
+on public.flashcards for insert
+to anon
+with check (true);
+
+create policy "Allow public flashcard updates"
+on public.flashcards for update
+to anon
+using (true)
+with check (true);
+
+create policy "Allow public flashcard deletes"
+on public.flashcards for delete
+to anon
+using (true);
 ```
+
+Then copy these from Supabase Project Settings > API into the app's Cloud database panel:
+
+- Project URL
+- anon public key
+
+This simple setup is meant for a personal flash-card app. Anyone with the deployed app URL and anon key could read/write the table, so do not put sensitive material in it.

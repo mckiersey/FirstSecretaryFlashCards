@@ -6,6 +6,7 @@
     <title>Flash Cards</title>
     <link rel="stylesheet" href="./styles.css" />
     <script src="./vendor/xlsx.full.min.js" defer></script>
+    <script src="./vendor/supabase.min.js" defer></script>
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -22,6 +23,27 @@
         <label for="fileInput">Excel or CSV file</label>
         <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
         <p class="hint">Expected columns: Question and Answer. The first two columns are used if names are missing.</p>
+      </section>
+
+      <section class="cloud">
+        <div class="cloud-head">
+          <div>
+            <h2>Cloud database</h2>
+            <p id="cloudStatus">Not connected</p>
+          </div>
+          <button id="loadCloud" type="button">Load cloud cards</button>
+        </div>
+        <div class="cloud-grid">
+          <label>
+            Supabase URL
+            <input id="supabaseUrl" type="url" placeholder="https://your-project.supabase.co" />
+          </label>
+          <label>
+            Supabase anon key
+            <input id="supabaseKey" type="password" autocomplete="off" />
+          </label>
+          <button id="saveCloud" type="button">Save connection</button>
+        </div>
       </section>
 
       <section class="stats" aria-label="Study stats">
