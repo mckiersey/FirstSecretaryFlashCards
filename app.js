@@ -76,6 +76,15 @@ function save() {
   );
 }
 
+function isMacPlatform() {
+  const platform = navigator.userAgentData?.platform || navigator.platform || "";
+  return /mac/i.test(platform);
+}
+
+function updatePlatformFeatures() {
+  els.exportExcel.classList.toggle("hidden", !isMacPlatform());
+}
+
 function shuffleCards(cards) {
   const shuffled = [...cards];
 
@@ -470,4 +479,5 @@ els.wrongCard.addEventListener("click", () => recordResult("wrong"));
 
 load();
 connectCloud(loadCloudConfig());
+updatePlatformFeatures();
 render();
