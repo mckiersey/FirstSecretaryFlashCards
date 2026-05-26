@@ -251,8 +251,8 @@ async function addCard(card) {
 function answerInfoColumns(card) {
   const columns = cardExtraColumns(card);
   return [
-    columns[0] || { header: "Column C", value: "" },
-    columns[1] || { header: "Column D", value: "" },
+    columns[0] || { header: "Sub-Capability", value: "" },
+    columns[1] || { header: "Capability", value: "" },
   ];
 }
 
@@ -323,9 +323,9 @@ function render() {
   els.answerInput.value = card.answer;
 
   const [firstExtra, secondExtra] = answerInfoColumns(card);
-  els.extraOneLabel.textContent = firstExtra.header || "Column C";
+  els.extraOneLabel.textContent = firstExtra.header || "Sub-Capability";
   els.extraOneValue.textContent = firstExtra.value || "";
-  els.extraTwoLabel.textContent = secondExtra.header || "Column D";
+  els.extraTwoLabel.textContent = secondExtra.header || "Capability";
   els.extraTwoValue.textContent = secondExtra.value || "";
   save();
 }
@@ -447,8 +447,8 @@ function formCard() {
     lastReviewed: null,
     createdAt: new Date().toISOString(),
     extraColumns: [
-      { header: "Column C", value: els.newColumnC.value.trim() },
-      { header: "Column D", value: els.newColumnD.value.trim() },
+      { header: "Sub-Capability", value: els.newColumnC.value.trim() },
+      { header: "Capability", value: els.newColumnD.value.trim() },
     ],
   };
 }
