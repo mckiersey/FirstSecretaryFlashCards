@@ -39,6 +39,7 @@ const els = {
   cardStats: document.querySelector("#cardStats"),
   flashCard: document.querySelector("#flashCard"),
   faceLabel: document.querySelector("#faceLabel"),
+  answerQuestionRef: document.querySelector("#answerQuestionRef"),
   cardText: document.querySelector("#cardText"),
   extraInfo: document.querySelector("#extraInfo"),
   extraOneLabel: document.querySelector("#extraOneLabel"),
@@ -328,6 +329,8 @@ function render() {
   els.cardStats.textContent = `${card.right} right / ${card.wrong} wrong`;
   els.faceLabel.textContent = state.showAnswer ? "Answer" : "Question";
   els.cardText.textContent = state.showAnswer ? card.answer : card.question;
+  els.answerQuestionRef.textContent = card.question;
+  els.answerQuestionRef.classList.toggle("hidden", !state.showAnswer);
   els.answerEditor.classList.toggle("hidden", !state.showAnswer);
   els.wrongCard.classList.toggle("hidden", !state.showAnswer);
   els.rightCard.classList.toggle("hidden", !state.showAnswer);
