@@ -23,6 +23,7 @@
         <label for="fileInput">Excel or CSV file</label>
         <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
         <p class="hint">Expected columns: Question and Answer. The first two columns are used if names are missing.</p>
+        <button id="exportExcel" type="button">Export Excel</button>
       </section>
 
       <section class="cloud">
@@ -89,6 +90,19 @@
           </button>
 
           <div id="answerEditor" class="editor hidden">
+            <details id="extraInfo" class="extra-info">
+              <summary>Additional info</summary>
+              <dl>
+                <div>
+                  <dt id="extraOneLabel">Column C</dt>
+                  <dd id="extraOneValue"></dd>
+                </div>
+                <div>
+                  <dt id="extraTwoLabel">Column D</dt>
+                  <dd id="extraTwoValue"></dd>
+                </div>
+              </dl>
+            </details>
             <label for="answerInput">Edit answer</label>
             <textarea id="answerInput" rows="5"></textarea>
             <button id="saveAnswer" type="button">Save answer</button>
@@ -96,9 +110,9 @@
 
           <div class="actions">
             <button id="prevCard" type="button">Previous</button>
-            <button id="wrongCard" class="danger" type="button">Wrong</button>
-            <button id="rightCard" class="success" type="button">Right</button>
             <button id="nextCard" type="button">Next</button>
+            <button id="wrongCard" class="danger result-action hidden" type="button">Wrong</button>
+            <button id="rightCard" class="success result-action hidden" type="button">Right</button>
           </div>
         </article>
       </section>

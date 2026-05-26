@@ -12,6 +12,7 @@ const state = {
 
 const els = {
   fileInput: document.querySelector("#fileInput"),
+  exportExcel: document.querySelector("#exportExcel"),
   clearDeck: document.querySelector("#clearDeck"),
   supabaseUrl: document.querySelector("#supabaseUrl"),
   supabaseKey: document.querySelector("#supabaseKey"),
@@ -30,6 +31,11 @@ const els = {
   flashCard: document.querySelector("#flashCard"),
   faceLabel: document.querySelector("#faceLabel"),
   cardText: document.querySelector("#cardText"),
+  extraInfo: document.querySelector("#extraInfo"),
+  extraOneLabel: document.querySelector("#extraOneLabel"),
+  extraOneValue: document.querySelector("#extraOneValue"),
+  extraTwoLabel: document.querySelector("#extraTwoLabel"),
+  extraTwoValue: document.querySelector("#extraTwoValue"),
   answerEditor: document.querySelector("#answerEditor"),
   answerInput: document.querySelector("#answerInput"),
   saveAnswer: document.querySelector("#saveAnswer"),
@@ -40,7 +46,11 @@ const els = {
 };
 
 function makeId() {
-  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  if (crypto.randomUUID) return crypto.randomUUID();
+
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (char) =>
+    (Number(char) ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (Number(char) / 4)))).toString(16),
+  );
 }
 
 function load() {
@@ -64,6 +74,17 @@ function save() {
       currentIndex: state.currentIndex,
     }),
   );
+}
+
+function shuffleCards(cards) {
+  const shuffled = [...cards];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
 }
 
 function setCloudStatus(message) {
@@ -100,6 +121,10 @@ function connectCloud(config) {
 }
 
 function rowToCard(row) {
+  const extraColumns = Array.isArray(row.extra_data?.columns)
+    ? row.extra_data.columns
+    : Object.entries(row.extra_data || {}).map(([header, value]) => ({ header, value }));
+
   return {
     id: row.id,
     question: row.question,
@@ -108,7 +133,14 @@ function rowToCard(row) {
     wrong: row.wrong_count || 0,
     lastReviewed: row.last_reviewed,
     createdAt: row.created_at,
+    extraColumns,
   };
+}
+
+function cardExtraColumns(card) {
+  if (Array.isArray(card.extraColumns)) return card.extraColumns;
+
+  return Object.entries(card.extraData || {}).map(([header, value]) => ({ header, value }));
 }
 
 function cardToRow(card) {
@@ -120,6 +152,7 @@ function cardToRow(card) {
     wrong_count: card.wrong,
     last_reviewed: card.lastReviewed,
     created_at: card.createdAt,
+    extra_data: { columns: cardExtraColumns(card) },
   };
 }
 
@@ -137,7 +170,7 @@ async function loadFromCloud() {
     return;
   }
 
-  state.cards = data.map(rowToCard);
+  state.cards = shuffleCards(data.map(rowToCard));
   state.currentIndex = 0;
   state.showAnswer = false;
   state.filter = "all";
@@ -176,6 +209,12 @@ async function saveCardToCloud(card) {
 
   const { error } = await state.cloud.from(tableName).upsert(cardToRow(card));
   setCloudStatus(error ? `Cloud update failed: ${error.message}` : "Cloud saved");
+}
+
+function extraEntries(card) {
+  return cardExtraColumns(card)
+    .map(({ header, value }) => [header, value])
+    .filter(([, value]) => String(value ?? "").trim());
 }
 
 function filteredCards() {
@@ -240,20 +279,55 @@ function render() {
   els.faceLabel.textContent = state.showAnswer ? "Answer" : "Question";
   els.cardText.textContent = state.showAnswer ? card.answer : card.question;
   els.answerEditor.classList.toggle("hidden", !state.showAnswer);
+  els.wrongCard.classList.toggle("hidden", !state.showAnswer);
+  els.rightCard.classList.toggle("hidden", !state.showAnswer);
   els.answerInput.value = card.answer;
+
+  const [firstExtra, secondExtra] = extraEntries(card);
+  const hasExtra = Boolean(firstExtra || secondExtra);
+  els.extraInfo.classList.toggle("hidden", !hasExtra);
+  els.extraOneLabel.textContent = firstExtra?.[0] || "Column C";
+  els.extraOneValue.textContent = firstExtra?.[1] || "";
+  els.extraTwoLabel.textContent = secondExtra?.[0] || "Column D";
+  els.extraTwoValue.textContent = secondExtra?.[1] || "";
   save();
 }
 
-function parseRows(rows) {
-  return rows
-    .map((row) => {
-      const keys = Object.keys(row);
-      const questionKey = keys.find((key) => key.trim().toLowerCase() === "question") || keys[0];
-      const answerKey = keys.find((key) => key.trim().toLowerCase() === "answer") || keys[1];
-      const question = String(row[questionKey] ?? "").trim();
-      const answer = String(row[answerKey] ?? "").trim();
+function normalizeHeader(value, index) {
+  const header = String(value ?? "").trim();
+  return header || `Column ${index + 1}`;
+}
 
+function parseTable(table) {
+  const firstContentRow = table.findIndex((row) => row.some((cell) => String(cell ?? "").trim()));
+  if (firstContentRow === -1) return [];
+
+  const headers = table[firstContentRow].map(normalizeHeader);
+  const questionIndex = headers.findIndex((header) => header.trim().toLowerCase() === "question");
+  const answerIndex = headers.findIndex((header) => header.trim().toLowerCase() === "answer");
+  const qIndex = questionIndex >= 0 ? questionIndex : 0;
+  const aIndex = answerIndex >= 0 ? answerIndex : 1;
+
+  return table
+    .slice(firstContentRow + 1)
+    .map((cells) => {
+      if (!cells.some((cell) => String(cell ?? "").trim())) return null;
+
+      const question = String(cells[qIndex] ?? "").trim();
+      const answer = String(cells[aIndex] ?? "").trim();
       if (!question || !answer) return null;
+
+      const extraColumns = [];
+      cells.forEach((cell, index) => {
+        if (index === qIndex || index === aIndex) return;
+
+        const value = String(cell ?? "").trim();
+        if (!value) return;
+        extraColumns.push({
+          header: headers[index] || `Column ${index + 1}`,
+          value,
+        });
+      });
 
       return {
         id: makeId(),
@@ -263,6 +337,7 @@ function parseRows(rows) {
         wrong: 0,
         lastReviewed: null,
         createdAt: new Date().toISOString(),
+        extraColumns,
       };
     })
     .filter(Boolean);
@@ -271,8 +346,8 @@ function parseRows(rows) {
 async function importFile(file) {
   const workbook = XLSX.read(await file.arrayBuffer());
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-  const cards = parseRows(rows);
+  const table = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "", blankrows: true });
+  const cards = shuffleCards(parseTable(table));
 
   if (!cards.length) {
     alert("No question/answer rows found. Use columns named Question and Answer, or put them in the first two columns.");
@@ -285,6 +360,33 @@ async function importFile(file) {
   state.filter = "all";
   render();
   await replaceCloudDeck();
+}
+
+function exportToExcel() {
+  if (!state.cards.length) {
+    alert("No cards to export yet.");
+    return;
+  }
+
+  const extraHeaders = [...new Set(state.cards.flatMap((card) => cardExtraColumns(card).map(({ header }) => header)))];
+  const rows = state.cards.map((card) => ({
+    Question: card.question,
+    Answer: card.answer,
+    ...Object.fromEntries(
+      extraHeaders.map((header) => [
+        header,
+        cardExtraColumns(card).find((column) => column.header === header)?.value || "",
+      ]),
+    ),
+    Right: card.right,
+    Wrong: card.wrong,
+    LastReviewed: card.lastReviewed || "",
+    CreatedAt: card.createdAt || "",
+  }));
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Flashcards");
+  XLSX.writeFile(workbook, "flashcards-export.xlsx");
 }
 
 function move(delta) {
@@ -307,6 +409,8 @@ els.fileInput.addEventListener("change", (event) => {
   const [file] = event.target.files;
   if (file) importFile(file);
 });
+
+els.exportExcel.addEventListener("click", exportToExcel);
 
 els.clearDeck.addEventListener("click", () => {
   if (!state.cards.length || confirm("Clear all cards and progress from this browser and connected cloud database?")) {

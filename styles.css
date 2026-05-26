@@ -90,6 +90,10 @@ h1 {
   margin-bottom: 12px;
 }
 
+.importer button {
+  justify-self: start;
+}
+
 .importer label,
 .cloud label,
 .editor label {
@@ -227,6 +231,35 @@ h1 {
   margin-top: 12px;
 }
 
+.extra-info {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.extra-info summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.extra-info dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0 0;
+}
+
+.extra-info dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.extra-info dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -237,7 +270,7 @@ textarea {
 
 .actions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-top: 12px;
 }
@@ -289,6 +322,10 @@ textarea {
   .actions,
   .cloud-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .extra-info dl {
+    grid-template-columns: 1fr;
   }
 
   .controls {

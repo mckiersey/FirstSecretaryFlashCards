@@ -15,11 +15,15 @@ If those column names are not present, the app uses the first two columns.
 ## Features
 
 - Import cards from Excel or CSV
+- Ignore blank rows in imported spreadsheets
 - Flip question to answer
 - Edit the answer side
-- Mark cards right or wrong
+- Show right/wrong buttons only after the answer is revealed
 - Track total cards, right answers, wrong answers, and accuracy
 - Filter all, missed, or unseen cards
+- Show columns C and D as additional info on the answer side
+- Preserve additional imported columns in Supabase and Excel exports
+- Export the current deck back to Excel
 - Save in browser local storage
 - Optional Supabase cloud database for syncing across browsers/devices
 
@@ -48,7 +52,8 @@ create table if not exists public.flashcards (
   right_count integer not null default 0,
   wrong_count integer not null default 0,
   last_reviewed timestamptz,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  extra_data jsonb not null default '{}'::jsonb
 );
 
 alter table public.flashcards enable row level security;
@@ -73,6 +78,13 @@ create policy "Allow public flashcard deletes"
 on public.flashcards for delete
 to anon
 using (true);
+```
+
+If you already created the table before extra Excel columns were supported, run this once:
+
+```sql
+alter table public.flashcards
+add column if not exists extra_data jsonb not null default '{}'::jsonb;
 ```
 
 Then copy these from Supabase Project Settings > API into the app's Cloud database panel:
