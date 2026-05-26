@@ -211,10 +211,12 @@ async function saveCardToCloud(card) {
   setCloudStatus(error ? `Cloud update failed: ${error.message}` : "Cloud saved");
 }
 
-function extraEntries(card) {
-  return cardExtraColumns(card)
-    .map(({ header, value }) => [header, value])
-    .filter(([, value]) => String(value ?? "").trim());
+function answerInfoColumns(card) {
+  const columns = cardExtraColumns(card);
+  return [
+    columns[0] || { header: "Column C", value: "" },
+    columns[1] || { header: "Column D", value: "" },
+  ];
 }
 
 function filteredCards() {
@@ -283,13 +285,11 @@ function render() {
   els.rightCard.classList.toggle("hidden", !state.showAnswer);
   els.answerInput.value = card.answer;
 
-  const [firstExtra, secondExtra] = extraEntries(card);
-  const hasExtra = Boolean(firstExtra || secondExtra);
-  els.extraInfo.classList.toggle("hidden", !hasExtra);
-  els.extraOneLabel.textContent = firstExtra?.[0] || "Column C";
-  els.extraOneValue.textContent = firstExtra?.[1] || "";
-  els.extraTwoLabel.textContent = secondExtra?.[0] || "Column D";
-  els.extraTwoValue.textContent = secondExtra?.[1] || "";
+  const [firstExtra, secondExtra] = answerInfoColumns(card);
+  els.extraOneLabel.textContent = firstExtra.header || "Column C";
+  els.extraOneValue.textContent = firstExtra.value || "";
+  els.extraTwoLabel.textContent = secondExtra.header || "Column D";
+  els.extraTwoValue.textContent = secondExtra.value || "";
   save();
 }
 
@@ -317,12 +317,18 @@ function parseTable(table) {
       const answer = String(cells[aIndex] ?? "").trim();
       if (!question || !answer) return null;
 
-      const extraColumns = [];
+      const extraColumns = headers
+        .map((header, index) => ({
+          header,
+          value: String(cells[index] ?? "").trim(),
+        }))
+        .filter((_, index) => index !== qIndex && index !== aIndex);
+
       cells.forEach((cell, index) => {
         if (index === qIndex || index === aIndex) return;
+        if (index < headers.length) return;
 
         const value = String(cell ?? "").trim();
-        if (!value) return;
         extraColumns.push({
           header: headers[index] || `Column ${index + 1}`,
           value,

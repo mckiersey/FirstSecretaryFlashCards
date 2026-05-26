@@ -237,16 +237,17 @@ h1 {
   padding: 10px 12px;
 }
 
-.extra-info summary {
-  cursor: pointer;
-  font-weight: 700;
+.extra-info h2 {
+  font-size: 16px;
+  line-height: 1.3;
+  margin: 0;
 }
 
 .extra-info dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin: 10px 0 0;
+  margin: 8px 0 0;
 }
 
 .extra-info dt {
