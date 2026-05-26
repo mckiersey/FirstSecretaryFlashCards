@@ -32,6 +32,7 @@ const els = {
   wrongCount: document.querySelector("#wrongCount"),
   accuracy: document.querySelector("#accuracy"),
   filterButtons: document.querySelectorAll(".filter"),
+  shuffleDeck: document.querySelector("#shuffleDeck"),
   emptyState: document.querySelector("#emptyState"),
   cardPanel: document.querySelector("#cardPanel"),
   positionLabel: document.querySelector("#positionLabel"),
@@ -112,6 +113,16 @@ function shuffleCards(cards) {
   }
 
   return shuffled;
+}
+
+function shuffleDeck() {
+  if (state.cards.length < 2) return;
+
+  state.cards = shuffleCards(state.cards);
+  state.currentIndex = 0;
+  state.showAnswer = false;
+  save();
+  render();
 }
 
 function setCloudStatus(message) {
@@ -475,6 +486,7 @@ els.fileInput.addEventListener("change", (event) => {
 });
 
 els.exportExcel.addEventListener("click", exportToExcel);
+els.shuffleDeck.addEventListener("click", shuffleDeck);
 
 els.tabButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveTab(button.dataset.tab));
