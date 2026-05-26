@@ -352,7 +352,7 @@ function parseTable(table) {
 
       const question = String(cells[qIndex] ?? "").trim();
       const answer = String(cells[aIndex] ?? "").trim();
-      if (!question || !answer) return null;
+      if (!question) return null;
 
       const extraColumns = headers
         .map((header, index) => ({
@@ -393,7 +393,7 @@ async function importFile(file) {
   const cards = shuffleCards(parseTable(table));
 
   if (!cards.length) {
-    alert("No question/answer rows found. Use columns named Question and Answer, or put them in the first two columns.");
+    alert("No question rows found. Use columns named Question and Answer, or put them in the first two columns.");
     return;
   }
 
@@ -436,7 +436,7 @@ function formCard() {
   const question = els.newQuestion.value.trim();
   const answer = els.newAnswer.value.trim();
 
-  if (!question || !answer) return null;
+  if (!question) return null;
 
   return {
     id: makeId(),
@@ -485,7 +485,7 @@ els.addCardForm.addEventListener("submit", async (event) => {
 
   const card = formCard();
   if (!card) {
-    els.addStatus.textContent = "Question and answer are required.";
+    els.addStatus.textContent = "Question is required.";
     return;
   }
 
