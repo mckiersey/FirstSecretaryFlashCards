@@ -19,102 +19,135 @@
         <button id="clearDeck" class="ghost" type="button">Clear</button>
       </header>
 
-      <section class="importer">
-        <label for="fileInput">Excel or CSV file</label>
-        <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
-        <p class="hint">Expected columns: Question and Answer. The first two columns are used if names are missing.</p>
-        <button id="exportExcel" type="button">Export Excel</button>
-      </section>
+      <nav class="tabs" aria-label="App tabs">
+        <button class="tab active" type="button" data-tab="studyTab">Study</button>
+        <button class="tab" type="button" data-tab="addTab">Add card</button>
+      </nav>
 
-      <section class="cloud">
-        <div class="cloud-head">
+      <section id="studyTab" class="tab-panel">
+        <section class="importer">
+          <label for="fileInput">Excel or CSV file</label>
+          <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
+          <p class="hint">Expected columns: Question and Answer. The first two columns are used if names are missing.</p>
+          <button id="exportExcel" type="button">Export Excel</button>
+        </section>
+
+        <section class="cloud">
+          <div class="cloud-head">
+            <div>
+              <h2>Cloud database</h2>
+              <p id="cloudStatus">Not connected</p>
+            </div>
+            <button id="loadCloud" type="button">Load cloud cards</button>
+          </div>
+          <div class="cloud-grid">
+            <label>
+              Supabase URL
+              <input id="supabaseUrl" type="url" placeholder="https://your-project.supabase.co" />
+            </label>
+            <label>
+              Supabase anon key
+              <input id="supabaseKey" type="password" autocomplete="off" />
+            </label>
+            <button id="saveCloud" type="button">Save connection</button>
+          </div>
+        </section>
+
+        <section class="stats" aria-label="Study stats">
           <div>
-            <h2>Cloud database</h2>
-            <p id="cloudStatus">Not connected</p>
+            <strong id="totalCards">0</strong>
+            <span>Cards</span>
           </div>
-          <button id="loadCloud" type="button">Load cloud cards</button>
-        </div>
-        <div class="cloud-grid">
+          <div>
+            <strong id="rightCount">0</strong>
+            <span>Right</span>
+          </div>
+          <div>
+            <strong id="wrongCount">0</strong>
+            <span>Wrong</span>
+          </div>
+          <div>
+            <strong id="accuracy">0%</strong>
+            <span>Accuracy</span>
+          </div>
+        </section>
+
+        <section class="controls" aria-label="Card filters">
+          <button class="filter active" type="button" data-filter="all">All</button>
+          <button class="filter" type="button" data-filter="missed">Missed</button>
+          <button class="filter" type="button" data-filter="unseen">Unseen</button>
+        </section>
+
+        <section class="study">
+          <div id="emptyState" class="empty">
+            <h2>No cards yet</h2>
+            <p>Upload an Excel or CSV file to start.</p>
+          </div>
+
+          <article id="cardPanel" class="card-panel hidden">
+            <div class="card-meta">
+              <span id="positionLabel">Card 1 of 1</span>
+              <span id="cardStats">0 right / 0 wrong</span>
+            </div>
+
+            <button id="flashCard" class="flash-card" type="button" aria-label="Flip card">
+              <span id="faceLabel">Question</span>
+              <span id="cardText"></span>
+            </button>
+
+            <div id="answerEditor" class="editor hidden">
+              <section id="extraInfo" class="extra-info" aria-label="Additional info">
+                <h2>Additional info</h2>
+                <dl>
+                  <div>
+                    <dt id="extraOneLabel">Column C</dt>
+                    <dd id="extraOneValue"></dd>
+                  </div>
+                  <div>
+                    <dt id="extraTwoLabel">Column D</dt>
+                    <dd id="extraTwoValue"></dd>
+                  </div>
+                </dl>
+              </section>
+              <label for="answerInput">Edit answer</label>
+              <textarea id="answerInput" rows="5"></textarea>
+              <button id="saveAnswer" type="button">Save answer</button>
+            </div>
+
+            <div class="actions">
+              <button id="prevCard" type="button">Previous</button>
+              <button id="nextCard" type="button">Next</button>
+              <button id="wrongCard" class="danger result-action hidden" type="button">Wrong</button>
+              <button id="rightCard" class="success result-action hidden" type="button">Right</button>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <section id="addTab" class="tab-panel hidden">
+        <form id="addCardForm" class="add-card">
+          <h2>Add card</h2>
           <label>
-            Supabase URL
-            <input id="supabaseUrl" type="url" placeholder="https://your-project.supabase.co" />
+            Question
+            <textarea id="newQuestion" rows="4" required></textarea>
           </label>
           <label>
-            Supabase anon key
-            <input id="supabaseKey" type="password" autocomplete="off" />
+            Answer
+            <textarea id="newAnswer" rows="5" required></textarea>
           </label>
-          <button id="saveCloud" type="button">Save connection</button>
-        </div>
-      </section>
-
-      <section class="stats" aria-label="Study stats">
-        <div>
-          <strong id="totalCards">0</strong>
-          <span>Cards</span>
-        </div>
-        <div>
-          <strong id="rightCount">0</strong>
-          <span>Right</span>
-        </div>
-        <div>
-          <strong id="wrongCount">0</strong>
-          <span>Wrong</span>
-        </div>
-        <div>
-          <strong id="accuracy">0%</strong>
-          <span>Accuracy</span>
-        </div>
-      </section>
-
-      <section class="controls" aria-label="Card filters">
-        <button class="filter active" type="button" data-filter="all">All</button>
-        <button class="filter" type="button" data-filter="missed">Missed</button>
-        <button class="filter" type="button" data-filter="unseen">Unseen</button>
-      </section>
-
-      <section class="study">
-        <div id="emptyState" class="empty">
-          <h2>No cards yet</h2>
-          <p>Upload an Excel or CSV file to start.</p>
-        </div>
-
-        <article id="cardPanel" class="card-panel hidden">
-          <div class="card-meta">
-            <span id="positionLabel">Card 1 of 1</span>
-            <span id="cardStats">0 right / 0 wrong</span>
+          <div class="add-grid">
+            <label>
+              Column C
+              <input id="newColumnC" type="text" />
+            </label>
+            <label>
+              Column D
+              <input id="newColumnD" type="text" />
+            </label>
           </div>
-
-          <button id="flashCard" class="flash-card" type="button" aria-label="Flip card">
-            <span id="faceLabel">Question</span>
-            <span id="cardText"></span>
-          </button>
-
-          <div id="answerEditor" class="editor hidden">
-            <section id="extraInfo" class="extra-info" aria-label="Additional info">
-              <h2>Additional info</h2>
-              <dl>
-                <div>
-                  <dt id="extraOneLabel">Column C</dt>
-                  <dd id="extraOneValue"></dd>
-                </div>
-                <div>
-                  <dt id="extraTwoLabel">Column D</dt>
-                  <dd id="extraTwoValue"></dd>
-                </div>
-              </dl>
-            </section>
-            <label for="answerInput">Edit answer</label>
-            <textarea id="answerInput" rows="5"></textarea>
-            <button id="saveAnswer" type="button">Save answer</button>
-          </div>
-
-          <div class="actions">
-            <button id="prevCard" type="button">Previous</button>
-            <button id="nextCard" type="button">Next</button>
-            <button id="wrongCard" class="danger result-action hidden" type="button">Wrong</button>
-            <button id="rightCard" class="success result-action hidden" type="button">Right</button>
-          </div>
-        </article>
+          <button type="submit">Add card</button>
+          <p id="addStatus" class="hint" aria-live="polite"></p>
+        </form>
       </section>
     </main>
   </body>

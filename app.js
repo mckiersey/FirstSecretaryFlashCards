@@ -12,6 +12,14 @@ const state = {
 
 const els = {
   fileInput: document.querySelector("#fileInput"),
+  tabButtons: document.querySelectorAll(".tab"),
+  tabPanels: document.querySelectorAll(".tab-panel"),
+  addCardForm: document.querySelector("#addCardForm"),
+  newQuestion: document.querySelector("#newQuestion"),
+  newAnswer: document.querySelector("#newAnswer"),
+  newColumnC: document.querySelector("#newColumnC"),
+  newColumnD: document.querySelector("#newColumnD"),
+  addStatus: document.querySelector("#addStatus"),
   exportExcel: document.querySelector("#exportExcel"),
   clearDeck: document.querySelector("#clearDeck"),
   supabaseUrl: document.querySelector("#supabaseUrl"),
@@ -83,6 +91,16 @@ function isMacPlatform() {
 
 function updatePlatformFeatures() {
   els.exportExcel.classList.toggle("hidden", !isMacPlatform());
+}
+
+function setActiveTab(tabId) {
+  els.tabButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.tab === tabId);
+  });
+
+  els.tabPanels.forEach((panel) => {
+    panel.classList.toggle("hidden", panel.id !== tabId);
+  });
 }
 
 function shuffleCards(cards) {
@@ -218,6 +236,16 @@ async function saveCardToCloud(card) {
 
   const { error } = await state.cloud.from(tableName).upsert(cardToRow(card));
   setCloudStatus(error ? `Cloud update failed: ${error.message}` : "Cloud saved");
+}
+
+async function addCard(card) {
+  state.cards.push(card);
+  state.currentIndex = state.cards.length - 1;
+  state.showAnswer = false;
+  state.filter = "all";
+  save();
+  await saveCardToCloud(card);
+  render();
 }
 
 function answerInfoColumns(card) {
@@ -404,6 +432,27 @@ function exportToExcel() {
   XLSX.writeFile(workbook, "flashcards-export.xlsx");
 }
 
+function formCard() {
+  const question = els.newQuestion.value.trim();
+  const answer = els.newAnswer.value.trim();
+
+  if (!question || !answer) return null;
+
+  return {
+    id: makeId(),
+    question,
+    answer,
+    right: 0,
+    wrong: 0,
+    lastReviewed: null,
+    createdAt: new Date().toISOString(),
+    extraColumns: [
+      { header: "Column C", value: els.newColumnC.value.trim() },
+      { header: "Column D", value: els.newColumnD.value.trim() },
+    ],
+  };
+}
+
 function move(delta) {
   state.currentIndex += delta;
   state.showAnswer = false;
@@ -426,6 +475,25 @@ els.fileInput.addEventListener("change", (event) => {
 });
 
 els.exportExcel.addEventListener("click", exportToExcel);
+
+els.tabButtons.forEach((button) => {
+  button.addEventListener("click", () => setActiveTab(button.dataset.tab));
+});
+
+els.addCardForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const card = formCard();
+  if (!card) {
+    els.addStatus.textContent = "Question and answer are required.";
+    return;
+  }
+
+  await addCard(card);
+  els.addCardForm.reset();
+  els.addStatus.textContent = "Card added.";
+  setActiveTab("studyTab");
+});
 
 els.clearDeck.addEventListener("click", () => {
   if (!state.cards.length || confirm("Clear all cards and progress from this browser and connected cloud database?")) {
