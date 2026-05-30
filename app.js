@@ -6,7 +6,7 @@ const embeddedSupabaseConfig = {
   key: "sb_publishable_ol4GAi0_lbJa44bOT9h0Sw_OGPMMrHq",
 };
 const deckTables = {
-  a: "flashcards_deck_a",
+  a: "flashcards",
   b: "flashcards_deck_b",
 };
 

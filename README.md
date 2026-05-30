@@ -48,7 +48,7 @@ No build command is required.
 Create a Supabase project, open the SQL editor, and run:
 
 ```sql
-create table if not exists public.flashcards_deck_a (
+create table if not exists public.flashcards (
   id uuid primary key,
   question text not null,
   answer text not null,
@@ -60,78 +60,67 @@ create table if not exists public.flashcards_deck_a (
 );
 
 create table if not exists public.flashcards_deck_b
-(like public.flashcards_deck_a including all);
+(like public.flashcards including all);
 
-alter table public.flashcards_deck_a enable row level security;
+alter table public.flashcards enable row level security;
 alter table public.flashcards_deck_b enable row level security;
 
+drop policy if exists "Allow public deck A reads" on public.flashcards;
 create policy "Allow public deck A reads"
-on public.flashcards_deck_a for select
+on public.flashcards for select
 to anon
 using (true);
 
+drop policy if exists "Allow public deck A inserts" on public.flashcards;
 create policy "Allow public deck A inserts"
-on public.flashcards_deck_a for insert
+on public.flashcards for insert
 to anon
 with check (true);
 
+drop policy if exists "Allow public deck A updates" on public.flashcards;
 create policy "Allow public deck A updates"
-on public.flashcards_deck_a for update
+on public.flashcards for update
 to anon
 using (true)
 with check (true);
 
+drop policy if exists "Allow public deck A deletes" on public.flashcards;
 create policy "Allow public deck A deletes"
-on public.flashcards_deck_a for delete
+on public.flashcards for delete
 to anon
 using (true);
 
+drop policy if exists "Allow public deck B reads" on public.flashcards_deck_b;
 create policy "Allow public deck B reads"
 on public.flashcards_deck_b for select
 to anon
 using (true);
 
+drop policy if exists "Allow public deck B inserts" on public.flashcards_deck_b;
 create policy "Allow public deck B inserts"
 on public.flashcards_deck_b for insert
 to anon
 with check (true);
 
+drop policy if exists "Allow public deck B updates" on public.flashcards_deck_b;
 create policy "Allow public deck B updates"
 on public.flashcards_deck_b for update
 to anon
 using (true)
 with check (true);
 
+drop policy if exists "Allow public deck B deletes" on public.flashcards_deck_b;
 create policy "Allow public deck B deletes"
 on public.flashcards_deck_b for delete
 to anon
 using (true);
 ```
 
-If you already created the original `flashcards` table, run this to copy those cards into Deck A:
+If you already created the original `flashcards` table before extra Excel columns were supported, run this once:
 
 ```sql
-insert into public.flashcards_deck_a (
-  id,
-  question,
-  answer,
-  right_count,
-  wrong_count,
-  last_reviewed,
-  created_at,
-  extra_data
-)
-select
-  id,
-  question,
-  answer,
-  right_count,
-  wrong_count,
-  last_reviewed,
-  created_at,
-  coalesce(extra_data, '{}'::jsonb)
-from public.flashcards
-on conflict (id) do nothing;
+alter table public.flashcards
+add column if not exists extra_data jsonb not null default '{}'::jsonb;
 ```
 
 The app has the Supabase project URL and publishable key embedded in `app.js`, so browsers connect automatically. Do not embed a service-role key, database password, JWT secret, or any other private key.
