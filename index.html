@@ -24,6 +24,17 @@
         <button class="tab" type="button" data-tab="addTab">Add card</button>
       </nav>
 
+      <section class="deck-picker" aria-label="Deck selector">
+        <div>
+          <h2>Active deck</h2>
+          <p id="activeDeckHint">Uploads, edits, deletes, and cloud sync use Deck A.</p>
+        </div>
+        <div class="deck-buttons">
+          <button class="deck-button active" type="button" data-deck="a">Deck A</button>
+          <button class="deck-button" type="button" data-deck="b">Deck B</button>
+        </div>
+      </section>
+
       <section id="studyTab" class="tab-panel">
         <section class="importer">
           <label for="fileInput">Excel or CSV file</label>
@@ -119,6 +130,7 @@
             <div class="actions">
               <button id="prevCard" type="button">Previous</button>
               <button id="nextCard" type="button">Next</button>
+              <button id="deleteCard" class="danger" type="button">Delete card</button>
               <button id="wrongCard" class="danger result-action hidden" type="button">Wrong</button>
               <button id="rightCard" class="success result-action hidden" type="button">Right</button>
             </div>

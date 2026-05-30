@@ -74,6 +74,7 @@ h1 {
 
 .importer,
 .cloud,
+.deck-picker,
 .stats,
 .controls,
 .card-panel,
@@ -93,6 +94,35 @@ h1 {
 }
 
 .tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.deck-picker {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.deck-picker h2 {
+  font-size: 18px;
+}
+
+.deck-picker p {
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.deck-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.deck-button.active {
   background: var(--accent);
   border-color: var(--accent);
   color: white;
@@ -328,7 +358,7 @@ textarea {
 
 .actions {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: 12px;
 }
@@ -362,6 +392,16 @@ textarea {
   .topbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .deck-picker {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .deck-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .stats {

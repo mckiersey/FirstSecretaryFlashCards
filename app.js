@@ -1,6 +1,10 @@
 const storageKey = "flash-card-app-v1";
 const cloudConfigKey = "flash-card-supabase-config-v1";
-const tableName = "flashcards";
+const activeDeckKey = "flash-card-active-deck-v1";
+const deckTables = {
+  a: "flashcards_deck_a",
+  b: "flashcards_deck_b",
+};
 
 const state = {
   cards: [],
@@ -8,10 +12,13 @@ const state = {
   showAnswer: false,
   filter: "all",
   cloud: null,
+  activeDeck: "a",
 };
 
 const els = {
   fileInput: document.querySelector("#fileInput"),
+  deckButtons: document.querySelectorAll(".deck-button"),
+  activeDeckHint: document.querySelector("#activeDeckHint"),
   tabButtons: document.querySelectorAll(".tab"),
   tabPanels: document.querySelectorAll(".tab-panel"),
   addCardForm: document.querySelector("#addCardForm"),
@@ -51,6 +58,7 @@ const els = {
   saveAnswer: document.querySelector("#saveAnswer"),
   prevCard: document.querySelector("#prevCard"),
   nextCard: document.querySelector("#nextCard"),
+  deleteCard: document.querySelector("#deleteCard"),
   rightCard: document.querySelector("#rightCard"),
   wrongCard: document.querySelector("#wrongCard"),
 };
@@ -63,8 +71,28 @@ function makeId() {
   );
 }
 
+function deckLabel(deck = state.activeDeck) {
+  return deck === "b" ? "Deck B" : "Deck A";
+}
+
+function activeTableName() {
+  return deckTables[state.activeDeck];
+}
+
+function deckStorageKey(deck = state.activeDeck) {
+  return `${storageKey}-${deck}`;
+}
+
+function loadActiveDeck() {
+  const savedDeck = localStorage.getItem(activeDeckKey);
+  state.activeDeck = savedDeck === "b" ? "b" : "a";
+}
+
 function load() {
-  const saved = localStorage.getItem(storageKey);
+  let saved = localStorage.getItem(deckStorageKey());
+  if (!saved && state.activeDeck === "a") {
+    saved = localStorage.getItem(storageKey);
+  }
   if (!saved) return;
 
   try {
@@ -78,7 +106,7 @@ function load() {
 
 function save() {
   localStorage.setItem(
-    storageKey,
+    deckStorageKey(),
     JSON.stringify({
       cards: state.cards,
       currentIndex: state.currentIndex,
@@ -103,6 +131,30 @@ function setActiveTab(tabId) {
   els.tabPanels.forEach((panel) => {
     panel.classList.toggle("hidden", panel.id !== tabId);
   });
+}
+
+function updateDeckUi() {
+  els.deckButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.deck === state.activeDeck);
+  });
+
+  els.activeDeckHint.textContent = `Uploads, edits, deletes, and cloud sync use ${deckLabel()}.`;
+}
+
+function switchDeck(deck) {
+  if (!deckTables[deck] || deck === state.activeDeck) return;
+
+  save();
+  state.activeDeck = deck;
+  localStorage.setItem(activeDeckKey, deck);
+  state.cards = [];
+  state.currentIndex = 0;
+  state.showAnswer = false;
+  state.filter = "all";
+  load();
+  updateDeckUi();
+  setCloudStatus(state.cloud ? `${deckLabel()} selected` : "Not connected");
+  render();
 }
 
 function shuffleCards(cards) {
@@ -201,8 +253,8 @@ async function loadFromCloud() {
     return;
   }
 
-  setCloudStatus("Loading cloud cards...");
-  const { data, error } = await state.cloud.from(tableName).select("*").order("created_at", { ascending: true });
+  setCloudStatus(`Loading ${deckLabel()} cloud cards...`);
+  const { data, error } = await state.cloud.from(activeTableName()).select("*").order("created_at", { ascending: true });
 
   if (error) {
     setCloudStatus(`Cloud load failed: ${error.message}`);
@@ -213,15 +265,15 @@ async function loadFromCloud() {
   state.currentIndex = 0;
   state.showAnswer = false;
   state.filter = "all";
-  setCloudStatus(`Loaded ${state.cards.length} cloud cards`);
+  setCloudStatus(`Loaded ${state.cards.length} ${deckLabel()} cloud cards`);
   render();
 }
 
 async function replaceCloudDeck() {
   if (!state.cloud) return;
 
-  setCloudStatus("Saving cloud deck...");
-  const { error: deleteError } = await state.cloud.from(tableName).delete().not("id", "is", null);
+  setCloudStatus(`Saving ${deckLabel()} cloud deck...`);
+  const { error: deleteError } = await state.cloud.from(activeTableName()).delete().not("id", "is", null);
 
   if (deleteError) {
     setCloudStatus(`Cloud save failed: ${deleteError.message}`);
@@ -229,25 +281,32 @@ async function replaceCloudDeck() {
   }
 
   if (!state.cards.length) {
-    setCloudStatus("Cloud deck cleared");
+    setCloudStatus(`${deckLabel()} cloud deck cleared`);
     return;
   }
 
-  const { error: insertError } = await state.cloud.from(tableName).insert(state.cards.map(cardToRow));
+  const { error: insertError } = await state.cloud.from(activeTableName()).insert(state.cards.map(cardToRow));
 
   if (insertError) {
     setCloudStatus(`Cloud save failed: ${insertError.message}`);
     return;
   }
 
-  setCloudStatus(`Saved ${state.cards.length} cards to cloud`);
+  setCloudStatus(`Saved ${state.cards.length} cards to ${deckLabel()} cloud`);
 }
 
 async function saveCardToCloud(card) {
   if (!state.cloud || !card) return;
 
-  const { error } = await state.cloud.from(tableName).upsert(cardToRow(card));
+  const { error } = await state.cloud.from(activeTableName()).upsert(cardToRow(card));
   setCloudStatus(error ? `Cloud update failed: ${error.message}` : "Cloud saved");
+}
+
+async function deleteCardFromCloud(card) {
+  if (!state.cloud || !card) return;
+
+  const { error } = await state.cloud.from(activeTableName()).delete().eq("id", card.id);
+  setCloudStatus(error ? `Cloud delete failed: ${error.message}` : "Card deleted from cloud");
 }
 
 async function addCard(card) {
@@ -258,6 +317,18 @@ async function addCard(card) {
   save();
   await saveCardToCloud(card);
   render();
+}
+
+async function deleteCurrentCard() {
+  const card = currentCard();
+  if (!card || !confirm(`Delete this card from ${deckLabel()}?`)) return;
+
+  state.cards = state.cards.filter((savedCard) => savedCard.id !== card.id);
+  state.showAnswer = false;
+  clampIndex();
+  save();
+  render();
+  await deleteCardFromCloud(card);
 }
 
 function answerInfoColumns(card) {
@@ -320,12 +391,12 @@ function render() {
     els.emptyState.querySelector("h2").textContent = state.cards.length ? "No cards match this filter" : "No cards yet";
     els.emptyState.querySelector("p").textContent = state.cards.length
       ? "Pick another filter or import more cards."
-      : "Upload an Excel or CSV file to start.";
+      : `Upload an Excel or CSV file to ${deckLabel()} to start.`;
     save();
     return;
   }
 
-  els.positionLabel.textContent = `Card ${state.currentIndex + 1} of ${cards.length}`;
+  els.positionLabel.textContent = `${deckLabel()} - Card ${state.currentIndex + 1} of ${cards.length}`;
   els.cardStats.textContent = `${card.right} right / ${card.wrong} wrong`;
   els.faceLabel.textContent = state.showAnswer ? "Answer" : "Question";
   els.cardText.textContent = state.showAnswer ? card.answer : card.question;
@@ -443,7 +514,7 @@ function exportToExcel() {
   const worksheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Flashcards");
-  XLSX.writeFile(workbook, "flashcards-export.xlsx");
+  XLSX.writeFile(workbook, `flashcards-${state.activeDeck === "b" ? "deck-b" : "deck-a"}-export.xlsx`);
 }
 
 function formCard() {
@@ -490,6 +561,11 @@ els.fileInput.addEventListener("change", (event) => {
 
 els.exportExcel.addEventListener("click", exportToExcel);
 els.shuffleDeck.addEventListener("click", shuffleDeck);
+els.deleteCard.addEventListener("click", deleteCurrentCard);
+
+els.deckButtons.forEach((button) => {
+  button.addEventListener("click", () => switchDeck(button.dataset.deck));
+});
 
 els.tabButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveTab(button.dataset.tab));
@@ -511,7 +587,7 @@ els.addCardForm.addEventListener("submit", async (event) => {
 });
 
 els.clearDeck.addEventListener("click", () => {
-  if (!state.cards.length || confirm("Clear all cards and progress from this browser and connected cloud database?")) {
+  if (!state.cards.length || confirm(`Clear all cards and progress from ${deckLabel()} in this browser and connected cloud database?`)) {
     state.cards = [];
     state.currentIndex = 0;
     state.showAnswer = false;
@@ -560,7 +636,9 @@ els.nextCard.addEventListener("click", () => move(1));
 els.rightCard.addEventListener("click", () => recordResult("right"));
 els.wrongCard.addEventListener("click", () => recordResult("wrong"));
 
+loadActiveDeck();
 load();
 connectCloud(loadCloudConfig());
 updatePlatformFeatures();
+updateDeckUi();
 render();

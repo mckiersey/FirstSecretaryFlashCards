@@ -16,8 +16,11 @@ If those column names are not present, the app uses the first two columns.
 
 - Import cards from Excel or CSV
 - Ignore blank rows in imported spreadsheets
+- Switch between Deck A and Deck B
+- Store Deck A and Deck B in separate Supabase tables
 - Flip question to answer
 - Edit the answer side
+- Delete the current card
 - Show right/wrong buttons only after the answer is revealed
 - Track total cards, right answers, wrong answers, and accuracy
 - Filter all, missed, or unseen cards
@@ -45,7 +48,7 @@ No build command is required.
 Create a Supabase project, open the SQL editor, and run:
 
 ```sql
-create table if not exists public.flashcards (
+create table if not exists public.flashcards_deck_a (
   id uuid primary key,
   question text not null,
   answer text not null,
@@ -56,35 +59,79 @@ create table if not exists public.flashcards (
   extra_data jsonb not null default '{}'::jsonb
 );
 
-alter table public.flashcards enable row level security;
+create table if not exists public.flashcards_deck_b
+(like public.flashcards_deck_a including all);
 
-create policy "Allow public flashcard reads"
-on public.flashcards for select
+alter table public.flashcards_deck_a enable row level security;
+alter table public.flashcards_deck_b enable row level security;
+
+create policy "Allow public deck A reads"
+on public.flashcards_deck_a for select
 to anon
 using (true);
 
-create policy "Allow public flashcard inserts"
-on public.flashcards for insert
+create policy "Allow public deck A inserts"
+on public.flashcards_deck_a for insert
 to anon
 with check (true);
 
-create policy "Allow public flashcard updates"
-on public.flashcards for update
+create policy "Allow public deck A updates"
+on public.flashcards_deck_a for update
 to anon
 using (true)
 with check (true);
 
-create policy "Allow public flashcard deletes"
-on public.flashcards for delete
+create policy "Allow public deck A deletes"
+on public.flashcards_deck_a for delete
+to anon
+using (true);
+
+create policy "Allow public deck B reads"
+on public.flashcards_deck_b for select
+to anon
+using (true);
+
+create policy "Allow public deck B inserts"
+on public.flashcards_deck_b for insert
+to anon
+with check (true);
+
+create policy "Allow public deck B updates"
+on public.flashcards_deck_b for update
+to anon
+using (true)
+with check (true);
+
+create policy "Allow public deck B deletes"
+on public.flashcards_deck_b for delete
 to anon
 using (true);
 ```
 
-If you already created the table before extra Excel columns were supported, run this once:
+If you already created the original `flashcards` table, run this to copy those cards into Deck A:
 
 ```sql
-alter table public.flashcards
-add column if not exists extra_data jsonb not null default '{}'::jsonb;
+insert into public.flashcards_deck_a (
+  id,
+  question,
+  answer,
+  right_count,
+  wrong_count,
+  last_reviewed,
+  created_at,
+  extra_data
+)
+select
+  id,
+  question,
+  answer,
+  right_count,
+  wrong_count,
+  last_reviewed,
+  created_at,
+  coalesce(extra_data, '{}'::jsonb)
+from public.flashcards
+on conflict (id) do nothing;
 ```
 
 Then copy these from Supabase Project Settings > API into the app's Cloud database panel:
