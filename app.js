@@ -1,6 +1,10 @@
 const storageKey = "flash-card-app-v1";
 const cloudConfigKey = "flash-card-supabase-config-v1";
 const activeDeckKey = "flash-card-active-deck-v1";
+const embeddedSupabaseConfig = {
+  url: "https://curdmcropuiwebxkdbmq.supabase.co",
+  key: "sb_publishable_ol4GAi0_lbJa44bOT9h0Sw_OGPMMrHq",
+};
 const deckTables = {
   a: "flashcards_deck_a",
   b: "flashcards_deck_b",
@@ -183,6 +187,10 @@ function setCloudStatus(message) {
 }
 
 function loadCloudConfig() {
+  return embeddedSupabaseConfig;
+}
+
+function loadSavedCloudConfig() {
   const saved = localStorage.getItem(cloudConfigKey);
   if (!saved) return null;
 
@@ -638,7 +646,8 @@ els.wrongCard.addEventListener("click", () => recordResult("wrong"));
 
 loadActiveDeck();
 load();
-connectCloud(loadCloudConfig());
+const cloudConnected = connectCloud(loadCloudConfig());
 updatePlatformFeatures();
 updateDeckUi();
 render();
+if (cloudConnected) loadFromCloud();

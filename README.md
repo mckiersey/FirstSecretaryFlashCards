@@ -134,9 +134,6 @@ from public.flashcards
 on conflict (id) do nothing;
 ```
 
-Then copy these from Supabase Project Settings > API into the app's Cloud database panel:
-
-- Project URL
-- anon public key
+The app has the Supabase project URL and publishable key embedded in `app.js`, so browsers connect automatically. Do not embed a service-role key, database password, JWT secret, or any other private key.
 
 This simple setup is meant for a personal flash-card app. Anyone with the deployed app URL and anon key could read/write the table, so do not put sensitive material in it.
